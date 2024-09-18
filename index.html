@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mesro - Virtual Assistant</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 600px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .chat-output {
+      height: 400px;
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+      overflow-y: auto;
+    }
+    .chat-input-section {
+      padding: 10px;
+      background: #f9f9f9;
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #007BFF;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div id="chat-output" class="chat-output"></div>
+    <div class="chat-input-section">
+      <input type="text" id="chat-input" class="chat-input" placeholder="Type your message here..." onkeydown="if(event.key === 'Enter') sendMessage()">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+  <script>
+    const chatOutput = document.getElementById('chat-output');
+    const chatInput = document.getElementById('chat-input');
+  
+    // Load intents JSON
+    let intents;
+  
+    async function loadIntents() {
+      try {
+        const response = await fetch('intents.json');
+        intents = await response.json();
+        console.log('Intents loaded:', intents);
+      } catch (error) {
+        console.error('Error loading intents:', error);
+      }
+    }
+  
+    function initializeChat() {
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Hello, I am Mesro. Your virtual assistant for BIT Mesra Guest House. How may I assist you today?</div>`;
+    }
+  
+    async function sendMessage() {
+      const userMessage = chatInput.value.trim();
+      if (!userMessage) return;
+  
+      chatInput.value = '';
+      chatOutput.innerHTML += `<div><strong>You:</strong> ${userMessage}</div>`;
+  
+      const response = await getChatbotResponse(userMessage);
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> ${response}</div>`;
+      chatOutput.scrollTop = chatOutput.scrollHeight; // Auto-scroll to the bottom
+    }
+  
+    async function getChatbotResponse(message) {
+      try {
+        const response = await fetch('https://mesro.vercel.app/chatbot', { // Replace with actual API endpoint
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        return data.reply; // Adjust based on API response format
+      } catch (error) {
+        console.error('Error fetching chatbot response:', error);
+        return "Sorry, I'm having trouble understanding that right now.";
+      }
+    }
+  
+    loadIntents();  // Load intents when the page loads
+    initializeChat();
+  </script>  
+</body>
+</html>

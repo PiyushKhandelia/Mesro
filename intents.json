@@ -1,0 +1,35 @@
+{
+    "intents": [
+      {
+        "intent": "get_price",
+        "examples": [
+          "What is the price of a Small room at IGH for a single person?",
+          "How much does a Large room cost for double occupancy at IGH?",
+          "What are the rates for a Mezzanine room at IGH?",
+          "How much for a Suite at OGH?",
+          "What's the price of a Large room for single occupancy at IGH?"
+        ]
+      },
+      {
+        "intent": "recommend_room",
+        "examples": [
+          "Can you recommend a room at IGH for a single guest?",
+          "What room type at OGH is best for a couple?",
+          "Which is the best room at IGH for a family?",
+          "Suggest a budget-friendly room at OGH.",
+          "What room at IGH has the best view?"
+        ]
+      },
+      {
+        "intent": "book_room",
+        "examples": [
+          "How can I book a Small room at IGH for next weekend?",
+          "Can you help me reserve a Suite at OGH for two nights?",
+          "What’s the process to book a room at IGH?",
+          "How do I book a Large room at OGH?",
+          "I want to book a Mezzanine room at IGH for one night."
+        ]
+      }
+    ]
+  }
+  

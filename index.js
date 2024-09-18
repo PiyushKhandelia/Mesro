@@ -1,9 +1,21 @@
 const express = require('express');
+const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware to parse JSON
 app.use(express.json());
+
+// Load intents JSON
+let intents;
+fs.readFile('intents.json', 'utf8', (err, data) => {
+  if (err) {
+    console.error('Error reading intents.json:', err);
+    return;
+  }
+  intents = JSON.parse(data);
+  console.log('Intents loaded:', intents);
+});
 
 // Sample data for chatbot response
 const guestHouses = {
@@ -28,7 +40,7 @@ app.post('/chatbot', (req, res) => {
   const message = req.body.message.toLowerCase();
   let reply = "";
 
-  // Logic to handle chatbot questions
+  // Logic to handle chatbot questions using intents
   if (message.includes("cheapest room") && message.includes("igh") && message.includes("single occupancy")) {
     reply = `The cheapest room at IGH for single occupancy is the Small room at 1000.`;
   } else if (message.includes("price for a double room") && message.includes("large") && message.includes("ogh")) {
