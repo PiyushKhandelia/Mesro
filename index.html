@@ -80,7 +80,7 @@
     }
   
     function initializeChat() {
-      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Hello, I am Mesro. Your virtual assistant for BIT Mesra Guest House. How may I assist you today?</div>`;
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Hello, I am Mesro, your virtual assistant for BIT Mesra Guest House. How may I assist you today?</div>`;
     }
   
     async function sendMessage() {
@@ -91,7 +91,15 @@
       chatOutput.innerHTML += `<div><strong>You:</strong> ${userMessage}</div>`;
   
       const response = await getChatbotResponse(userMessage);
-      chatOutput.innerHTML += `<div><strong>Mesro:</strong> ${response}</div>`;
+      
+      if (Array.isArray(response)) {
+        response.forEach((reply, index) => {
+          chatOutput.innerHTML += `<div><strong>Mesro (${index + 1}):</strong> ${reply}</div>`;
+        });
+      } else {
+        chatOutput.innerHTML += `<div><strong>Mesro:</strong> ${response}</div>`;
+      }
+
       chatOutput.scrollTop = chatOutput.scrollHeight; // Auto-scroll to the bottom
     }
   
@@ -105,10 +113,10 @@
           body: JSON.stringify({ message })
         });
         const data = await response.json();
-        return data.reply; // Adjust based on API response format
+        return data.replies; // Adjust based on API response format, assuming multiple options are in an array
       } catch (error) {
         console.error('Error fetching chatbot response:', error);
-        return "Sorry, I'm having trouble understanding that right now.";
+        return ["Sorry, I'm having trouble understanding that right now."];
       }
     }
   
