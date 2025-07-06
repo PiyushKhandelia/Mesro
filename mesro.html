@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="https://piyushkhandelia.github.io/Guest_House_Reservation_System/Images/Mesro-logo.png">
+  <title>Mesro - Virtual Assistant</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('https://piyushkhandelia.github.io/Guest_House_Reservation_System/Images/Mesro-bg.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .chatbox {
+      width: 50%;
+      height: 80%;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0.9;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      background-color: rgba(226, 232, 239, 0.95);
+      font: small-caps bold 15px/30px Georgia, serif;
+    }
+
+    .chat-output {
+      flex-grow: 1;
+      overflow-y: auto;
+      border-bottom: 1px solid #ccc;
+      padding: 10px;
+    }
+
+    .chat-input-section {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+      background-color: #f8f8f8;
+      justify-content: space-around;
+    }
+
+    .chat-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 20px;
+      justify-content: center;
+    }
+
+    .chat-buttons button {
+      padding: 10px;
+      background-color: white;
+      color: black;
+      border: 2px solid #007bff;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      font: small-caps bold 15px/30px Georgia, serif;
+      transition: background-color 0.3s ease;
+    }
+
+    .chat-buttons button:hover {
+      background-color: #f0f0f0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    /*Add Feedback*/
+    .feedback-form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    margin: 10px;
+}
+
+.feedback-textarea {
+    width: 90%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    margin-bottom: 15px;
+}
+
+.feedback-submit-btn {
+    padding: 10px 20px;
+    background-color: white;
+    color: black;
+    border: 2px solid #007bff;
+    border-radius: 5px;
+    cursor: pointer;
+    font: small-caps bold 15px/30px Georgia, serif;
+    transition: background-color 0.3s ease;
+    width: 50%;
+}
+
+.feedback-submit-btn:hover {
+    background-color: #f0f0f0;
+}
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chatbox">
+      <div id="chat-output" class="chat-output"></div>
+      <div id="chat-buttons" class="chat-buttons">
+        <!-- Dynamic buttons will be inserted here -->
+      </div>
+    </div>
+  </div>
+  <script>
+    let chatOutput = document.getElementById('chat-output');
+    let chatButtons = document.getElementById('chat-buttons');
+
+    let guestHouses = {
+      "IGH": {
+        rooms: [
+          { type: "Small", description: "One Queen size Bed", occupancy: { single: 1000, double: 1200 } },
+          { type: "Mezzanine", description: "Two single beds", occupancy: { single: 1200, double: 1500 } },
+          { type: "Large", description: "Two single beds", occupancy: { single: 1500, double: 2000 } },
+          { type: "Suites", description: "Luxury suite", occupancy: { double: 2500 } }
+        ]
+      },
+      "OGH": {
+        rooms: [
+          { type: "Large", description: "Double Bed Room", occupancy: { single: 1200, double: 1500 } },
+          { type: "Suites", description: "Luxury suite", occupancy: { double: 2500 } }
+        ]
+      }
+    };
+
+    let userPreferences = {};
+    let filteredRooms = [];
+
+    function addButton(text, onClickHandler) {
+      let button = document.createElement('button');
+      button.innerText = text;
+      button.onclick = onClickHandler;
+      chatButtons.appendChild(button);
+    }
+
+    function clearButtons() {
+      chatButtons.innerHTML = ''; // Clear all buttons before adding new ones
+    }
+
+    function restartChat() {
+      chatOutput.innerHTML = '';
+      clearButtons();
+      userPreferences = {};
+      filteredRooms = [];
+      askForInitialOptions(); // Restart the conversation
+    }
+
+    function askForInitialOptions() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Hi, I'm Mesro! Please select a service:</div>`;
+      addButton('Feedback Management', () => handleFeedbackManagement());
+      addButton('Booking Management', () => handleBookingManagement());
+      addButton('Restart', restartChat);
+    }
+
+    function handleFeedbackManagement() {
+        clearButtons();
+        chatOutput.innerHTML += `<div><strong>Mesro:</strong> Feedback Management Options:</div>`;
+        addButton('Add Feedback', () => handleAddFeedback());
+        addButton('Track Feedback Status', () => handleTrackStatus());
+        addButton('Delete Feedback', () => handleDeleteFeedback());
+        addButton('Restart', restartChat);
+    }
+
+    // Function to handle displaying the Add Feedback form
+    function handleAddFeedback() {
+    // Clear buttons and chat output
+    clearButtons();
+    chatOutput.innerHTML = '';
+    
+    // Create a container for the feedback form
+    const formContainer = document.createElement('div');
+    formContainer.className = 'feedback-form-container';
+    
+    // Create label
+    const label = document.createElement('label');
+    label.setAttribute('for', 'feedback');
+    label.textContent = 'Enter your feedback:';
+    
+    // Create textarea
+    const textarea = document.createElement('textarea');
+    textarea.id = 'feedback';
+    textarea.rows = 5;
+    textarea.placeholder = 'Share your thoughts and experiences...';
+    textarea.className = 'feedback-textarea';
+    
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.justifyContent = 'space-between';
+    buttonContainer.style.width = '100%';
+    buttonContainer.style.marginTop = '10px';
+    
+    // Create submit button
+    const submitButton = document.createElement('button');
+    submitButton.id = 'submit-feedback';
+    submitButton.textContent = 'Submit Feedback';
+    submitButton.className = 'feedback-submit-btn';
+    submitButton.style.width = '100%';
+    
+    // Add event listeners
+    submitButton.addEventListener('click', submitFeedback);
+    
+    // Append buttons to button container
+    buttonContainer.appendChild(submitButton);
+    
+    // Append elements to container
+    formContainer.appendChild(label);
+    formContainer.appendChild(textarea);
+    formContainer.appendChild(buttonContainer);
+    
+    // Add to chat output
+    chatOutput.appendChild(formContainer);
+}
+
+// Function to submit feedback to the Flask backend and process the result
+function submitFeedback() {
+    const feedbackTextarea = document.getElementById('feedback');
+    const feedback = feedbackTextarea.value.trim();
+    
+    // Validate feedback
+    if (!feedback) {
+        chatOutput.innerHTML += `
+            <div style="color: red; background-color: #ffeeee; padding: 10px; border-radius: 5px;">
+                <strong>Mesro:</strong> Please enter some feedback before submitting.
+            </div>
+        `;
+        return;
+    }
+
+    // Send feedback to backend
+    $.ajax({
+        url: 'http://localhost:8008/add_feedback',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ feedback: feedback }),
+        success: function(response) {
+            // Clear textarea after successful submission
+            feedbackTextarea.value = '';
+
+            // Display success message with categories and result
+            chatOutput.innerHTML += `
+                <div style="color: green; background-color: #eeffee; padding: 10px; border-radius: 5px;">
+                    <strong>Mesro:</strong> Thank you for your feedback! 
+                    ${response.categories ? `Detected Categories: ${response.categories.join(', ')}` : ''}
+                </div>
+            `;
+            
+            // Display recorded feedback message
+            chatOutput.innerHTML += `<div><strong>Mesro:</strong> Your feedback has been recorded.</div>`;
+            
+            // Display the result from the analysis
+            chatOutput.innerHTML += `<div><strong>Mesro:</strong> Result: ${response.result}</div>`;
+            
+            // Add restart button after displaying messages
+            setTimeout(() => {
+                addButton('Restart', restartChat);
+            }, 2000);
+        },
+        error: function(xhr, status, error) {
+            // More detailed error handling
+            console.error('Feedback submission error:', error);
+            
+            let errorMessage = 'Failed to submit feedback. Please try again.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMessage = xhr.responseJSON.error;
+            }
+
+            chatOutput.innerHTML += `
+                <div style="color: red; background-color: #ffeeee; padding: 10px; border-radius: 5px;">
+                    <strong>Mesro:</strong> ${errorMessage}
+                </div>
+            `;
+        }
+    });
+}
+
+function restartChat() {
+    location.reload(); // Refresh the page to restart the chat
+}
+
+    function handleTrackStatus() {
+        clearButtons();
+        chatOutput.innerHTML += `<div><strong>Mesro:</strong> Enter your feedback ID to track its status:</div>`;
+        setTimeout(() => {
+            chatOutput.innerHTML += `<div><strong>Mesro:</strong> Your feedback is currently under review. Thank you for your patience.</div>`;
+            addButton('Restart', restartChat);
+        }, 1000);
+    }
+
+    function handleDeleteFeedback() {
+        clearButtons();
+        chatOutput.innerHTML += `<div><strong>Mesro:</strong> Enter your feedback ID to delete the feedback:</div>`;
+        setTimeout(() => {
+            chatOutput.innerHTML += `<div><strong>Mesro:</strong> Your feedback has been deleted successfully.</div>`;
+            addButton('Restart', restartChat);
+        }, 1000);
+    }
+
+    function handleBookingManagement() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Choose an option for Booking Management:</div>`;
+      addButton('Make a Booking', () => askForGuestHouse());
+      addButton('Update a Booking', () => handleUpdateBooking());
+      addButton('Cancel a Booking', () => handleCancelBooking());
+      addButton('Restart', restartChat);
+    }
+
+    function handleUpdateBooking() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Update Booking functionality is under development.</div>`;
+      addButton('Restart', restartChat);
+    }
+
+    function handleCancelBooking() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Cancel Booking functionality is under development.</div>`;
+      addButton('Restart', restartChat);
+    }
+
+    function askForGuestHouse() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Please choose a guest house (IGH or OGH).</div>`;
+      addButton('IGH', () => handleGuestHouse('IGH'));
+      addButton('OGH', () => handleGuestHouse('OGH'));
+      addButton('Restart', restartChat);
+    }
+
+    function handleGuestHouse(guestHouse) {
+      userPreferences.guestHouse = guestHouse;
+      chatOutput.innerHTML += `<div><strong>You:</strong> ${guestHouse}</div>`;
+      askForRoomType();
+    }
+
+    function askForRoomType() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Choose a room type.</div>`;
+      let availableRooms = guestHouses[userPreferences.guestHouse].rooms;
+      availableRooms.forEach(room => addButton(room.type, () => handleRoomType(room.type)));
+      addButton('Restart', restartChat);
+    }
+
+    function handleRoomType(roomType) {
+      userPreferences.roomType = roomType;
+      chatOutput.innerHTML += `<div><strong>You:</strong> ${roomType}</div>`;
+      askForOccupancy();
+    }
+
+    function askForOccupancy() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Choose occupancy (Single or Double).</div>`;
+      addButton('Single', () => handleOccupancy('single'));
+      addButton('Double', () => handleOccupancy('double'));
+      addButton('Restart', restartChat);
+    }
+
+    function handleOccupancy(occupancy) {
+      userPreferences.occupancy = occupancy;
+      chatOutput.innerHTML += `<div><strong>You:</strong> ${occupancy.charAt(0).toUpperCase() + occupancy.slice(1)}</div>`;
+      askForPriceRange();
+    }
+
+    function askForPriceRange() {
+      clearButtons();
+      chatOutput.innerHTML += `<div><strong>Mesro:</strong> Choose your price range.</div>`;
+      addButton('Below 1000', () => handlePriceRange('below1000'));
+      addButton('1000 - 2000', () => handlePriceRange('1000-2000'));
+      addButton('2000 - 3000', () => handlePriceRange('2000-3000'));
+      addButton('Above 3000', () => handlePriceRange('above3000'));
+      addButton('Restart', restartChat);
+    }
+
+    function handlePriceRange(priceRange) {
+      userPreferences.priceRange = priceRange;
+      chatOutput.innerHTML += `<div><strong>You:</strong> ${priceRange.replace(/([0-9]+)/g, ' $1 ').replace('-', 'to')}</div>`;
+      displayRoomSuggestions();
+    }
+
+    function displayRoomSuggestions() {
+      clearButtons();
+      filteredRooms = suggestRoom(userPreferences);
+      if (filteredRooms.length > 0) {
+        chatOutput.innerHTML += `<div><strong>Mesro:</strong> Here are the room suggestions based on your preferences:</div>`;
+        let roomTable = '<table><tr><th>Guest House</th><th>Room Type</th><th>Description</th><th>Occupancy</th><th>Price</th></tr>';
+        filteredRooms.forEach(room => {
+          roomTable += `<tr>
+              <td>${room.guestHouse}</td>
+              <td>${room.type}</td>
+              <td>${room.description}</td>
+              <td>${room.occupancy}</td>
+              <td>${room.price}</td>
+            </tr>`;
+        });
+        roomTable += '</table>';
+        chatOutput.innerHTML += roomTable;
+      } else {
+        chatOutput.innerHTML += `<div><strong>Mesro:</strong> Sorry, no rooms found for your criteria.</div>`;
+      }
+      addButton('Restart', restartChat);
+    }
+
+    function suggestRoom(preferences) {
+      let rooms = guestHouses[preferences.guestHouse].rooms;
+      let priceRange = preferences.priceRange;
+
+      let filtered = rooms.filter(room => {
+        let price = room.occupancy[preferences.occupancy];
+        return priceRange === 'below1000' ? price < 1000 :
+               priceRange === '1000-2000' ? price >= 1000 && price <= 2000 :
+               priceRange === '2000-3000' ? price > 2000 && price <= 3000 :
+               price > 3000;
+      }).map(room => ({
+        guestHouse: preferences.guestHouse,
+        type: room.type,
+        description: room.description,
+        occupancy: preferences.occupancy.charAt(0).toUpperCase() + preferences.occupancy.slice(1),
+        price: room.occupancy[preferences.occupancy]
+      }));
+
+      return filtered;
+    }
+
+    // Initialize chat
+    askForInitialOptions();
+  </script>
+  <script src="https://piyushkhandelia.github.io/Guest_House_Reservation_System/static_js/jQuery.js"></script>
+</body>
+</html>
